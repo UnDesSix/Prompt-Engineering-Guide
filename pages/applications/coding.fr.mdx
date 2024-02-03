@@ -1,3 +1,161 @@
-# Generating Code
+# Génération de code
 
-Needs translation! Feel free to contribute a translating by clicking the `Edit this page` button on the right side.
+import { Callout, FileTree } from 'nextra-theme-docs'
+import {Screenshot} from 'components/screenshot'
+import CODE1 from '../../img/code-generation/chat-mode.png'
+
+<Callout emoji="⚠️">
+  Ce chapitre est en développement.
+</Callout>
+
+Les LLMs comme ChatGPT sont très efficaces à la génération de code. Dans ce chapitre, nous allons aborder de nombreux exemples de comment utiliser ChatGPT pour la génération de code.
+
+La plateforme d'essai OpenAI (Mode chat) et le modèle `gpt-3.5-turbo` sont utilisés pour tous les exemples suivants.
+
+Comme tous les modèles de chat d'OpenAI, vous pouvez utiliser un `Message système` pour définir le comportement et le format des réponses. Nous utiliserons le message système suivant pour les exemples de prompts :
+
+```
+Vous êtes un assistant de codage généreux qui peut enseigner à un débutant à coder. Votre langage de prédilection est le Python. N'expliquez pas le code, générez simplement le bloc de code lui-même.
+```
+
+## Exemple de base
+
+Voici le message utilisateur, qui sera la promesse elle-même avec l'instruction spécifique de code que vous souhaitez que le modèle génère. Voici une capture d'écran de la première promesse de génération de code. Notez que le code final a été généré par l'Assistant.
+
+<Screenshot src={CODE1} alt="CODE1" />
+
+Voici le message de prompte si vous souhaitez essayer vous-même : 
+
+```
+Ecrivez du code qui demande au utilisateur de leur nom et affiche "Bonjour"
+```
+
+## Transformer des commentaires en code
+
+Vous pouvez également utiliser les capacités de génération de code de ces LLMs pour générer du code à partir de commentaires seuls. Regardons un autre exemple qui passe les instructions sous la forme d'un bloc de commentaires :
+
+*Prompt:*
+```vbnet
+"""
+1. Créer une liste de films
+2. Créer une liste de notes de ces films
+3. Les combiner pour former un objet JSON de 10 films avec leurs notes.
+"""
+```
+
+*Sortie :*
+```python
+movies = ["Le Parrain", "Le Dieu du carnage", "Le Seigneur des Anneaux : Le Retour du Roi", "Schindler's List", "La Liste de Schindler", "Forrest Gump", "Étoiles et garçons", "L'Empire contre-attaque", "Inception", "Le Silence des Agneaux"]
+
+notes = [9.3, 8.5, 9.2, 8.8, 8.9, 9.0, 7.5, 8.7, 8.6, 9.1]
+
+films_notes = {}
+
+for i in range(len(movies)):
+    films_notes[movies[i]] = notes[i]
+
+json_object = json.dumps(films_notes, indent=4)
+
+print(json_object)
+```
+
+Le code généré ressemble au code fonctionnel. Cependant, l'output ne contient pas une importante instruction d'importation, c'est-à-dire `import json`. Bien que ces modèles génèrent du code fonctionnel, vous devez prendre soin de petits détails et toujours tester votre code.
+
+## Compléter des fonctions ou la suite prochaine
+
+Ces LLMs ont également été intégrés à des outils tels que GitHub Copilot, ce qui les rend utiles pour les développeurs. Une fonctionnalité utile est la capacité du modèle à compléter des fonctions.
+
+*Prompt:*
+```python
+# Fonction pour multiplier deux nombres et ajouter 75 à celui-ci
+
+def multiply(
+```
+
+*Sortie :*
+```python
+a, b):
+    result = a * b
+    result += 75
+    return result
+```
+
+## Génération de requêtes MySQL
+
+En plus du simple exemple de génération de code de base ci-dessus, vous pouvez utiliser le modèle pour générer du code utile qui pourrait être utilisé dans d'autres aspects du programmeur, comme la création et le test de requêtes MySQL.
+
+Supposons que vous disposez d'un jeu de données avec des informations que vous pouvez inclure dans la promesse et que vous instruisez le modèle pour générer une requête spécifique. Par exemple :
+
+```vbnet
+"""
+Table departments, colonnes = [DepartmentId, DepartmentName]
+Table students, colonnes = [DepartmentId, StudentId, StudentName]
+Générer une requête MySQL pour tous les étudiants dans le département de l'Informatique
+"""
+```
+
+*Sortie :*
+```mysql
+SELECT students.StudentId, students.StudentName
+FROM students
+INNER JOIN departments
+ON students.DepartmentId = departments.DepartmentId
+WHERE departments.DepartmentName = 'Informatique';
+```
+
+Le modèle génère une requête ! Cependant, dans cet exemple, nous avons inventé la base de données, donc nous n'avons pas de base de données à tester la requête générée. Si vous testez cet exemple, il pourrait être utile de disposer de cette base de données. Heureusement, vous pouvez utiliser ChatGPT pour cela également. Un approche consiste à utiliser une version modifiée de la promesse ci-dessus avec des instructions légèrement différentes pour générer un schéma de base de données valide :
+
+```mysql
+Table departments, colonnes = [DepartmentId, DepartmentName]
+Table students, colonnes = [DepartmentId, StudentId, StudentName]
+Créer un schéma de base de données valide avec les tables et colonnes ci-dessus
+```
+
+Le modèle génère le schéma suivant :
+
+```mysql
+CREATE TABLE departments (
+  DepartmentId INT PRIMARY KEY,
+  DepartmentName VARCHAR(50)
+);
+
+CREATE TABLE students (
+  DepartmentId INT,
+  StudentId INT PRIMARY KEY,
+  StudentName VARCHAR(50),
+  FOREIGN KEY (DepartmentId) REFERENCES departments(DepartmentId)
+);
+```
+
+Vous pouvez créer une base de données temporaire en utilisant quelque chose comme [sqliteonline.com](https://sqliteonline.com/).
+
+Vous aurez également besoin de données d'essai valides pour tester si la requête générée était valide. Utilisons ChatGPT pour cela également ! Le prompt pourrait ressembler à ce qui suit :
+
+```mysql
+CREATE TABLE departments (
+  DepartmentId INT PRIMARY KEY,
+  DepartmentName VARCHAR(50)
+);
+
+CREATE TABLE students (
+  DepartmentId INT,
+  StudentId INT PRIMARY KEY,
+  StudentName VARCHAR(50),
+  FOREIGN KEY (DepartmentId) REFERENCES departments(DepartmentId)
+);
+
+Donnez-moi des instructions pour insérer des données valides dans la base de données ci-dessus (4 lignes par table)
+```
+
+La sortie avec des instructions d'insertion :
+
+```mysql
+INSERT INTO departments (DepartmentId, DepartmentName)
+VALUES (1, 'Informatique'), (2, 'Mathématiques'), (3, 'Physique'), (4, 'Biologie');
+
+INSERT INTO students (DepartmentId, StudentId, StudentName)
+VALUES (1, 101, 'John Doe'), (1, 102, 'Jane Doe'), (2, 201, 'Alice Smith'), (2, 202, 'Bob Johnson');
+```
+
+Maintenant que vous disposez de la base de données et des données d'essai, vous pouvez tester la requête originale. Selon les données d'essai, le résultat devrait être deux lignes avec 'Jane Doe' et 'John Doe'.
+
